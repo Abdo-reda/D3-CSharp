@@ -2,7 +2,7 @@
 /shelf/
 /workspace.xml
 # Rider ignored files
-/.idea.d3-force-CSharp.iml
+/.idea.d3-CSharp.iml
 /projectSettingsUpdater.xml
 /modules.xml
 /contentModel.xml

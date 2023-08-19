@@ -1,4 +1,5 @@
-﻿using d3_force_CSharp.Utility;
+﻿using d3_essentials;
+using d3_force_CSharp.Utility;
 
 namespace d3_force_CSharp.Forces;
 
@@ -23,9 +24,9 @@ public class Center
     
     public void force() {
         int i;
+        int n = nodes.Count;
         double sx = 0.0f;
         double sy = 0.0f;
-        int n = nodes.Count;
         Node curNode;
         
         for (i = 0; i < n; ++i) {
