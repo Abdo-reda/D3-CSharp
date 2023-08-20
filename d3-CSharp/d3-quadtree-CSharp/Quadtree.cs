@@ -21,17 +21,29 @@ public class Quadtree
 {
     private Quad root;
 
-    public Quadtree(List<Vector2> points, double x0, double y0, double x1, double y1, int pointLimit = 1) {
+    public delegate void VisitCallbackSignature(Quad quad);
+    private VisitCallbackSignature VisitCallback;
+
+    public Quadtree(List<Vector2> points,  int pointLimit = 1, double x0 = 0, double y0 = 0, double x1 = 100, double y1 = 100) {
         this.root = new Quad(x0, y0, x1, y1);
         Quad.SetPointLimit(pointLimit);
-        // this.root.nodes = nodes;
-        // I will probably have to create a function to add nodes to the quadtree.
+        this.AddAll(points);
+    }
+    
+    public Quadtree(int pointLimit = 1, double x0 = 0, double y0 = 0, double x1 = 100, double y1 = 100) {
+        this.root = new Quad(x0, y0, x1, y1);
+        Quad.SetPointLimit(pointLimit);
     }
     
     
     void Add(Vector2 point) {
         Cover(point);
         Quad curQuad = this.root;
+
+        while(curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())] != null) {
+            curQuad = curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())];
+        }
+        
         while (!curQuad.hasCapacity()) {
             int quadrant = this.determineQuad(point, curQuad.meanX(), curQuad.meanY());
             curQuad = curQuad.MakeChild(quadrant);
@@ -39,8 +51,10 @@ public class Quadtree
         curQuad.AddPoint(point);
     }
 
-    void AddAll() {
-        
+    void AddAll(List<Vector2> points) {
+        foreach (Vector2 point in points) {
+            this.Add(point);
+        }
     }
 
     /*
@@ -69,16 +83,16 @@ public class Quadtree
                 quadrant = 1;
                 x0 = x1 - xRange;
                 y1 = y0 + yRange;
-            } else if (x >= x1 && y >= y1) {
-                //quad0
-                quadrant = 0;
-                x1 = x0 + xRange;
-                y1 = y0 + yRange;
-            } else {
+            } else if (y < y0) {
                 //quad3
                 quadrant = 3;
                 x1 = x0 + xRange;
                 y0 = y1 - yRange;
+            } else {
+                //quad0
+                quadrant = 0;
+                x1 = x0 + xRange;
+                y1 = y0 + yRange;
             }
             Quad extendedQuad = new Quad(x0, y0, x1, y1);
             if (!root.isLeaf()) {
@@ -98,11 +112,12 @@ public class Quadtree
             quadrant = 2;
         } else if (x < xm) {
             quadrant = 1;
-        } else if (x >= xm && y >= ym) {
-            quadrant = 0;
-        } else {
+        } else if (y < ym) {
             quadrant = 3;
+        } else {
+            quadrant = 0;
         }
+        
         return quadrant;
     }
 
@@ -154,12 +169,21 @@ public class Quadtree
         
     }
     
-    void Visit() {
-        
+    public void Visit(VisitCallbackSignature VisitCallback) {
+        Quad curQuad = this.root;
+        this.VisitCallback = VisitCallback;
+        VisitAfter(curQuad);
     }
     
-    void VisitAfter() {
-        
+    private void VisitAfter(Quad curQuad) {
+        this.VisitCallback(curQuad);
+        if (!curQuad.isLeaf()) {
+            for (int i = 0; i < curQuad.quadrants.Length; i++) {
+                if (curQuad.quadrants[i] != null) {
+                    VisitAfter(curQuad.quadrants[i]);
+                }
+            }
+        }
     }
     
     void X() {
@@ -177,5 +201,16 @@ public class Quadtree
     void LeafCopy() {
         
     }
-    
+
+    /*public Vector4 Bounds() {
+        return new Vector4(
+             this.root.x0, 
+             this.root.y0, 
+            this.root.x1, 
+            this.root.y1);
+    }*/
+
+    public Vector2[] GetAllPoints() {
+        return this.root.InclusivePoints;
+    }
 }

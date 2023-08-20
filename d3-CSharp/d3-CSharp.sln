@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "d3-CSharp", "d3-CSharp\d3-C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "d3-essentials", "d3-essentials\d3-essentials.csproj", "{1A894AF0-4BD8-4056-BC2C-50F3DA400A0A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "d3-visualization", "d3-visualization\d3-visualization.csproj", "{C5B4D636-3894-4D6F-9735-28F1B46122D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{1A894AF0-4BD8-4056-BC2C-50F3DA400A0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A894AF0-4BD8-4056-BC2C-50F3DA400A0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A894AF0-4BD8-4056-BC2C-50F3DA400A0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5B4D636-3894-4D6F-9735-28F1B46122D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5B4D636-3894-4D6F-9735-28F1B46122D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5B4D636-3894-4D6F-9735-28F1B46122D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5B4D636-3894-4D6F-9735-28F1B46122D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

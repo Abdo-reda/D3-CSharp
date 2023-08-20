@@ -4,7 +4,7 @@
 using d3_essentials;
 
 
-
+Console.WriteLine("hello from main");
 
 /* TODO:
  - Make the output of the project be a CLASS not a window applicaiton.
