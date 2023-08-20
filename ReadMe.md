@@ -1,5 +1,5 @@
 ## What is this?
-This is side project for mostly fun, I wanted to use the [__d3-network graphs__](https://d3-graph-gallery.com/network.html) __in a .net / C# environment__ and so I decided to try and rewrite [d3-force](https://github.com/d3/d3-force) using C# (this is the main library used to create network graphs in d3.) I thought it might be fun and I could learn a thing or two!
+This is side project for fun, I wanted to use the [__d3-network graphs__](https://d3-graph-gallery.com/network.html) __in a .net / C# environment__ and so I decided to try and rewrite [d3-force](https://github.com/d3/d3-force) using C# (this is the main library used to create network graphs in d3.) I thought it might be fun and I could learn a thing or two!
 
 This may turn out to be more of a daunting and complex task than I expected but there is only one way of finding out :)
 

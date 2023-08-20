@@ -27,7 +27,7 @@ public struct Node
     public string name { get; set; }
     //public T data { get; set; }
     
-    Node(double x, double y, double radius = 1, string name="placeholder") {
+    public Node(double x, double y, double radius = 1, string name="node") {
         this.x = x;
         this.y = y;
         this._radius = radius;
