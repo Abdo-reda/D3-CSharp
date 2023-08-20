@@ -166,5 +166,13 @@ public class Quad
     public void CopyExclusivePoints(Quad childQuad) {
         this.exclusivePoints = new List<Vector2>(childQuad.exclusivePoints);
     }
+
+    public bool Contains(Vector2 point) {
+        for (int i=0; i<exclusivePoints.Count; i++) {
+            if (exclusivePoints[i] == point) return true;
+        }
+
+        return false;
+    }
     
 }

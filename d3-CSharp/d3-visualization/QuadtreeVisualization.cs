@@ -13,13 +13,14 @@ public partial class QuadtreeVisualization : Form
         InitializeComponent();
         List<Vector2> points = new List<Vector2>();
         Random rnd = new Random();
-        for (int i=0; i<rnd.Next(15,25); i++) {
-            int tempX = rnd.Next(-100,200);
-            int tempY = rnd.Next(-100,200);
-            Console.WriteLine(tempX + ", " + tempY);
-            points.Add(new Vector2(tempX, tempY));
-        }
-        // points.Add(new Vector2(50, -20));
+        // for (int i=0; i<rnd.Next(15,25); i++) {
+        //     int tempX = rnd.Next(-100,200);
+        //     int tempY = rnd.Next(-100,200);
+        //     Console.WriteLine(tempX + ", " + tempY);
+        //     points.Add(new Vector2(tempX, tempY));
+        // }
+        points.Add(new Vector2(20, 20));
+        points.Add(new Vector2(20, 20));
         this.quadtree = new Quadtree(points, 1);
         Console.WriteLine("Created Quadtree Successfully");
     }

@@ -43,11 +43,14 @@ public class Quadtree
         while(curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())] != null) {
             curQuad = curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())];
         }
-        
-        while (!curQuad.hasCapacity()) {
-            int quadrant = this.determineQuad(point, curQuad.meanX(), curQuad.meanY());
-            curQuad = curQuad.MakeChild(quadrant);
+
+        if (!curQuad.Contains(point)) {
+            while (!curQuad.hasCapacity()) {
+                int quadrant = this.determineQuad(point, curQuad.meanX(), curQuad.meanY());
+                curQuad = curQuad.MakeChild(quadrant);
+            }
         }
+        
         curQuad.AddPoint(point);
     }
 
