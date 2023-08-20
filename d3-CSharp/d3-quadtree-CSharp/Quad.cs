@@ -5,9 +5,13 @@ namespace d3_quadtree_CSharp;
 
 public class Quad
 {
-    public List<Vector2> points; //only one point? 
+    //Maybe later this value can local for each quad and remove the internal method below.
+    private static int POINT_LIMIT = 1; 
     
-    //could turn this into a vector2 or a point struct.
+    private List<Vector2> inclusivePoints; //points that reside in the quad or in the children quads.
+    private List<Vector2> exclusivePoints; //points that are in the quad but not in the children quads. Should never exceed the Point_Limit
+    
+    //use vector2 or a point struct for boundaries.
         //public Vector2 min;
         //public Vector2 max;
     
@@ -17,17 +21,19 @@ public class Quad
     public double x1;
     public double y1;
     
+    //I could determine whether the quad is a leaf or not if the points count is equal to the limit_point or if the four children are null.
+    
+    //TODO: maybe make this an array of Quads? more efficent?
     //Top Right, Top Left, Bottom Left, Bottom Right
-    public Quad TR;
-    public Quad TL;
-    public Quad BL;
-    public Quad BR;
+    public Quad?[] quadrants = new Quad?[4];
+    //maybe create functions that will create the above child quads so that it ensures that the boundaries are correct (each child is a quarter of the parent quad).
 
     
     
     public Quad(double x0 = 0, double y0 = 0, double x1 = 1, double y1 = 1) {
         if (!(x0<x1 && y0<y1)) {
-            throw new ArgumentException("Invalid values for boundaries, make sure that x0 < x1 & y0 < y1.");
+            // throw new ArgumentException("Invalid values for boundaries, make sure that x0 < x1 & y0 < y1.");
+            Console.WriteLine("Invalid values for boundaries, make sure that x0 < x1 & y0 < y1. For now default values will be used.");
         }
         
         this.x0 = x0;
@@ -38,7 +44,8 @@ public class Quad
 
     public void SetBoundaries(double x0, double y0, double x1, double y1) {
         if (!(x0<x1 && y0<y1)) {
-            throw new ArgumentException("Invalid values for boundaries, make sure that x0 < x1 & y0 < y1.");
+            Console.WriteLine("Invalid values for boundaries, make sure that x0 < x1 & y0 < y1.");
+            return;
         }
         
         this.x0 = x0;
@@ -46,6 +53,104 @@ public class Quad
         this.x1 = x1;
         this.y1 = y1;
     }
+
+    public bool isLeaf() {
+        //I can either check children or point count
+        for (int i=0; i<quadrants.Length; i++) {
+            if (quadrants[i] != null) return false;
+        }
+
+        return true;
+    }
+
+    public bool hasCapacity() {
+        if (exclusivePoints.Count < POINT_LIMIT) return true;
+        return false;
+    }
+
+    internal static void SetPointLimit(int pointLimit) {
+        POINT_LIMIT = pointLimit;
+    }
     
+    public Quad MakeChild(int quadrant) {
+        if (this.quadrants[quadrant] != null) {
+            Console.WriteLine("Child already exists at quadrant " + quadrant + ".");
+            //throw new ArgumentException("Child already exists at quadrant " + quadrant + ".");
+            return this.quadrants[quadrant]!;
+        }
+        
+        double childX0 = this.x0, childY0 = this.y0, childX1 = this.x1, childY1 = this.y1;
+        double mx = this.meanX(), my = this.meanY();
+        switch (quadrant) {
+            case 0:
+                childX0 = mx;
+                childY0 = my;
+                break;
+            case 1:
+                childX1 = mx;
+                childY0 = my;
+                break;
+            case 2:
+                childX1 = mx;
+                childY1 = my;
+                break;
+            case 3:
+                childX0 = mx;
+                childY1 = my;
+                break;
+        }
+        Quad child = new Quad(childX0, childY0, childX1, childY1);
+        this.quadrants[quadrant] = child;
+        this.PropogatePoints(quadrant);
+        return child;
+    }
+
+    public void AddPoint(Vector2 point) {
+        //handle concident points?
+        if (!this.InBoundary(point)) {
+            Console.WriteLine("Invalid Point, point is not within the boundaries of the quad.");
+            return;
+        }
+
+        if (exclusivePoints.Count == POINT_LIMIT) {
+            Console.WriteLine("Invalid Point, point limit has been exceeded.");
+            return; 
+        }
+        
+        exclusivePoints.Add(point);
+        inclusivePoints.Add(point);
+    }
+
+    public double meanX() {
+        return (x1 + x0) / 2;
+    }
+
+    public double meanY() {
+        return (y1 + y0) / 2;
+    }
+    
+    public bool InBoundary(Vector2 point) {
+        if (point.X >= x0 && point.X < x1 && point.Y >= y0 && point.Y < y1) return true;
+        return false;
+    }
+
+    //This will propogate the points to the child quadrant.
+    private void PropogatePoints(int quadrant) {
+        for (int i=0; i<exclusivePoints.Count; i++) {
+            if (this.quadrants[quadrant]!.InBoundary(exclusivePoints[i])) {
+                this.quadrants[quadrant]!.AddPoint(exclusivePoints[i]);
+                exclusivePoints.RemoveAt(i);
+                i--;
+            }
+        }
+    }
+    
+    public void CopyInclusivePoints(Quad childQuad) {
+        this.inclusivePoints = new List<Vector2>(childQuad.inclusivePoints);
+    }
+    
+    public void CopyExclusivePoints(Quad childQuad) {
+        this.exclusivePoints = new List<Vector2>(childQuad.exclusivePoints);
+    }
     
 }
