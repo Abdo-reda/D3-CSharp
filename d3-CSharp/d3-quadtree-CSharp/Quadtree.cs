@@ -36,7 +36,7 @@ public class Quadtree
     }
     
     
-    void Add(Vector2 point) {
+    public void Add(Vector2 point) {
         Cover(point);
         Quad curQuad = this.root;
 
@@ -44,7 +44,7 @@ public class Quadtree
             curQuad = curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())];
         }
 
-        if (!curQuad.Contains(point)) {
+        if (!curQuad.ContainsExclusive(point)) {
             while (!curQuad.hasCapacity()) {
                 int quadrant = this.determineQuad(point, curQuad.meanX(), curQuad.meanY());
                 curQuad = curQuad.MakeChild(quadrant);
@@ -54,7 +54,7 @@ public class Quadtree
         curQuad.AddPoint(point);
     }
 
-    void AddAll(List<Vector2> points) {
+    public void AddAll(List<Vector2> points) {
         foreach (Vector2 point in points) {
             this.Add(point);
         }
@@ -70,36 +70,36 @@ public class Quadtree
         double x = point.X, y = point.Y;
 
         while (x0 > x || x >= x1 || y0 > y || y >= y1) {
-            int quadrant = 0;
+            int childQuadrant = 0; //the quadran that the root quad will be moved to.
             xRange *= 2;
             yRange *= 2;
             
             //TODO: use bitwise operators instead of if statements. (more optimized?)
-     
             if (x < x0 && y < y0) {
                 //quad2
-                quadrant = 2;
+                childQuadrant = 0; //quad2 is parent
                 x0 = x1 - xRange;
                 y0 = y1 - yRange;
             } else if (x < x0) {
                 //quad1
-                quadrant = 1;
+                childQuadrant = 3; //quad 1 is parent
                 x0 = x1 - xRange;
                 y1 = y0 + yRange;
             } else if (y < y0) {
                 //quad3
-                quadrant = 3;
+                childQuadrant = 1; //quad 3 is parent
                 x1 = x0 + xRange;
                 y0 = y1 - yRange;
             } else {
                 //quad0
-                quadrant = 0;
+                childQuadrant = 2; //quad 0 is parent
                 x1 = x0 + xRange;
                 y1 = y0 + yRange;
             }
             Quad extendedQuad = new Quad(x0, y0, x1, y1);
             if (!root.isLeaf()) {
-                extendedQuad.quadrants[quadrant] = this.root;
+                extendedQuad.quadrants[childQuadrant] = this.root;
+                this.root.parent = extendedQuad;
             } else {
                 extendedQuad.CopyExclusivePoints(this.root);
             }
@@ -123,30 +123,6 @@ public class Quadtree
         
         return quadrant;
     }
-
-    /*private Quad ExtendRoot(int quadrant) {
-        //get new boundaries
-        //create new quad
-        //(if root has children or points) make new quad[quadrant] = root
-        //make root = new quad
-        //return root
-     
-        switch (quadrant) {
-            case 0:
-                break;
-            case 1:
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-        }
-        return this.root;
-    }*/
-    
-    void Data() {
-        
-    }
     
     void Extent() {
         
@@ -156,19 +132,18 @@ public class Quadtree
         
     }
     
-    void Remove() {
+    public void Remove(Vector2 point) {
+        Quad curQuad = this.root;
+        if (!curQuad.ContainsInclusive(point)) return;
+
+        while(curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())] != null) {
+            curQuad = curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())];
+        }
         
+        curQuad.RemovePoint(point);
     }
     
     void RemoveAll() {
-        
-    }
-    
-    Quad Root() {
-        return this.root;
-    }
-    
-    void Size() {
         
     }
     
@@ -213,7 +188,21 @@ public class Quadtree
             this.root.y1);
     }*/
 
-    public Vector2[] GetAllPoints() {
+    /*
+     * Returns a list of all the points in the quadtree.
+     *  - This could be implemented using visit method and adding a callback that pushes the exclusive points to a list.
+     */
+    public Vector2[] Data() {
         return this.root.InclusivePoints;
     }
+    
+    public int Size() {
+        int size = 0;
+        this.Visit((Quad quad) => {
+            size++;
+        });
+        return size;
+    }
+    
+    
 }
