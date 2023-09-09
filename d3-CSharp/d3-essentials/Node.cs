@@ -1,6 +1,6 @@
 ﻿namespace d3_essentials;
 
-public struct Node
+public struct Node //could use a factory if I want to have an optional or default T data type.
 {
     
     //- change the location of the node class
@@ -9,9 +9,9 @@ public struct Node
     
     //public delegate double RadiusFunction(Node node, int index, List<Node> nodes);
     public delegate double RadiusFunction(Node node);
+    static int counter = 0; //should this be moved to the factory? note Node that are created with the same generic T will have the same counter.
     
-    static int counter = 0;
-    //position (could use vectors)
+    //position (could use vector2)
     public double x { get; set; }
     public double y { get; set; }
     //velocity
@@ -25,7 +25,7 @@ public struct Node
     private static RadiusFunction CalcRadius = DefaultRadius;
     //data
     public string name { get; set; }
-    //public T data { get; set; }
+    // public T? data { get; set; } //TODO: maybe implement a generic T data type. however, I will have to modify anyone that uses Node struct, any forces, quadtree, etc.
     
     public Node(double x, double y, double radius = 1, string name="node") {
         this.x = x;
@@ -34,7 +34,8 @@ public struct Node
         this.index = counter;
         this.name = name + counter;
         counter++;
-    }
+        // this.data = data; T? data = default(T)
+    } 
     
     public static void SetRadiusFunction(RadiusFunction customFunction)
     {

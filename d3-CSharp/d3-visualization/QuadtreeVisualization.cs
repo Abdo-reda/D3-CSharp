@@ -27,7 +27,7 @@ public partial class QuadtreeVisualization : Form
         // points.Add(new Vector2(20, 120));
         // points.Add(new Vector2(80, 160));
         // points.Add(new Vector2(40, 20));
-        this.quadtree = new Quadtree(points, 2);
+        this.quadtree = new Quadtree(points, 1);
         Console.WriteLine("Created Quadtree Successfully");
         Console.WriteLine("It has " + this.quadtree.Size() + " quads");
         this.Click += handleClick;
@@ -43,7 +43,7 @@ public partial class QuadtreeVisualization : Form
         g.Clear(Color.Azure);
         
         this.quadtree.Visit((Quad curQuad) => {
-            Console.WriteLine("executing visit callback");
+            // Console.WriteLine("executing visit callback");
             // Console.WriteLine(g.VisibleClipBounds.Height - (curQuad.y1 - curQuad.y0) - curQuad.y0);
             RectangleF rootQuad = new RectangleF(
                 (float) curQuad.x0 + g.VisibleClipBounds.Width/2,
@@ -55,7 +55,7 @@ public partial class QuadtreeVisualization : Form
         });
         
         
-        foreach (Vector2 point in quadtree.Data()) {
+        foreach (Vector2 point in quadtree.GetPoints()) {
             PointF pointPosition = new PointF(point.X + g.VisibleClipBounds.Width/2, g.VisibleClipBounds.Height/2 - point.Y);
             g.FillEllipse(Brushes.Black, pointPosition.X - 2, pointPosition.Y - 2, 4, 4);
         }
@@ -79,11 +79,24 @@ public partial class QuadtreeVisualization : Form
 
     private void handleClick(object sender, EventArgs e) {
         MouseEventArgs me = (MouseEventArgs) e;
+
         using (Graphics g = this.CreateGraphics()) {
             Vector2 newPoint = new Vector2((me.X - g.VisibleClipBounds.Width / 2), (g.VisibleClipBounds.Height / 2 - me.Y));
-            Console.WriteLine("Clicked" +  newPoint.X + "," +  newPoint.Y);
-            quadtree.Add(newPoint);
-            this.DrawQuadtree(g);
-        }
+            Console.WriteLine("Clicked: " +  newPoint.X + "," +  newPoint.Y);
+            if (me.Button == MouseButtons.Left) {
+                quadtree.Add(newPoint);
+                this.DrawQuadtree(g);
+            } else if (me.Button == MouseButtons.Right) {
+                if (!this.quadtree.Remove(newPoint)) 
+                    this.quadtree.RemoveAll();
+                this.DrawQuadtree(g);
+            } else if (me.Button == MouseButtons.Middle) {
+                Vector2? data = this.quadtree.Find(newPoint);
+                if (data != null) Console.WriteLine("Data: " + data.Value.X + ", " + data.Value.Y);
+                else Console.WriteLine("No data found");
+            }
+         }
+
+        
     }
 }

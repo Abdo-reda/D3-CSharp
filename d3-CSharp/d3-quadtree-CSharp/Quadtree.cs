@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections;
+using System.Numerics;
 using d3_essentials;
 
 namespace d3_quadtree_CSharp;
@@ -16,6 +17,9 @@ namespace d3_quadtree_CSharp;
 /*
  * This implementation assumes that every quadrant is a square.
  */
+
+//TODO: 
+    //- should the quadtree take vector2 points? node? or just x,y?
 
 public class Quadtree
 {
@@ -35,36 +39,43 @@ public class Quadtree
         Quad.SetPointLimit(pointLimit);
     }
     
-    
+    /// <summary>
+    /// Expands the quadtree to cover the point and adds it to the quadtree. 
+    /// </summary>
+    /// <param name="point"></param>
     public void Add(Vector2 point) {
         Cover(point);
         Quad curQuad = this.root;
 
-        while(curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())] != null) {
-            curQuad = curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())];
+        while(curQuad.quadrants[this.DetermineQuad(point, curQuad.meanX(), curQuad.meanY())] != null) {
+            curQuad = curQuad.quadrants[this.DetermineQuad(point, curQuad.meanX(), curQuad.meanY())];
         }
 
         if (!curQuad.ContainsExclusive(point)) {
             while (!curQuad.hasCapacity()) {
-                int quadrant = this.determineQuad(point, curQuad.meanX(), curQuad.meanY());
+                int quadrant = this.DetermineQuad(point, curQuad.meanX(), curQuad.meanY());
                 curQuad = curQuad.MakeChild(quadrant);
             }
         }
         
         curQuad.AddPoint(point);
     }
-
+    
+    /// <summary>
+    /// Adds a list of points to the quadtree.
+    /// </summary>
+    /// <param name="points"> List </param>
     public void AddAll(List<Vector2> points) {
         foreach (Vector2 point in points) {
             this.Add(point);
         }
     }
-
-    /*
-     * Modifies the quadtree boundaries to cover the given point/node by doubling the boundaries and creating new quads.
-     * Also, appearently this implementation assumes that every quadrant is a square.
-     */
-    void Cover(Vector2 point) {
+    
+    /// <summary>
+    /// Modifies the quadtree boundaries to cover the given point/node by doubling the boundaries and creating new quads.
+    /// </summary>
+    /// <param name="point"> Vector2 </param>
+    public void Cover(Vector2 point) {
         double x0 = this.root.x0, x1 = this.root.x1, y0 = this.root.y0, y1 = this.root.y1;
         double xRange = x1 - x0, yRange = y1 - y0;
         double x = point.X, y = point.Y;
@@ -108,7 +119,7 @@ public class Quadtree
         }
     }
 
-    private int determineQuad(Vector2 point, double xm, double ym) {
+    private int DetermineQuad(Vector2 point, double xm, double ym) {
         int quadrant;
         double x = point.X, y = point.Y;
         if (x < xm && y < ym) {
@@ -124,33 +135,43 @@ public class Quadtree
         return quadrant;
     }
     
-    void Extent() {
-        
-    }
     
-    void Find() {
-        
-    }
-    
-    public void Remove(Vector2 point) {
+    /// <summary>
+    /// Removes the given point from the quadtree.
+    /// </summary>
+    /// <param name="point"> Vector2 </param>
+    public bool Remove(Vector2 point) {
         Quad curQuad = this.root;
-        if (!curQuad.ContainsInclusive(point)) return;
+        if (!curQuad.ContainsInclusive(point)) {
+            Console.WriteLine("Invalid Point, point does not exist in quadtree.");
+            return false;
+        }
 
-        while(curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())] != null) {
-            curQuad = curQuad.quadrants[this.determineQuad(point, curQuad.meanX(), curQuad.meanY())];
+        while(curQuad.quadrants[this.DetermineQuad(point, curQuad.meanX(), curQuad.meanY())] != null) {
+            curQuad = curQuad.quadrants[this.DetermineQuad(point, curQuad.meanX(), curQuad.meanY())];
         }
         
         curQuad.RemovePoint(point);
+        return true;
     }
     
-    void RemoveAll() {
-        
+    /// <summary>
+    /// Removes all points from the quadtree.
+    /// </summary>
+    public void RemoveAll() {
+        Vector2[] points = this.GetPoints();
+        foreach (Vector2 point in points) {
+            this.Remove(point);
+        }
     }
     
+    /// <summary>
+    /// Loops over all the quads in the quadtree and executes the given callback function.
+    /// </summary>
+    /// <param name="VisitCallback"></param>
     public void Visit(VisitCallbackSignature VisitCallback) {
-        Quad curQuad = this.root;
         this.VisitCallback = VisitCallback;
-        VisitAfter(curQuad);
+        VisitAfter(this.root);
     }
     
     private void VisitAfter(Quad curQuad) {
@@ -164,44 +185,126 @@ public class Quadtree
         }
     }
     
-    void X() {
+    /// <summary>
+    /// Performs proximity search for the nearest point to the given point. Returns null if no point is in the given range
+    /// </summary>
+    /// <param name="point"></param>
+    /// <returns> </returns>
+    public Vector2? Find(Vector2 targetPoint, double range = -1) {
+
+        if (range < 0) {
+            // range = Double.PositiveInfinity; //wtf I can do this?
+            range = this.root.x1 - this.root.x0;
+        }
         
+        double x = targetPoint.X, y = targetPoint.Y;
+        double searchX0 = x - range, searchY0 = y - range, searchX1 = x + range, searchY1 = y + range;  //boundaries of the search area
+        
+        Vector2? data = null;
+        Quad curQuad;
+        Stack<Quad> quadStack = new Stack<Quad>();
+        quadStack.Push(this.root);
+        
+        //don't like this, I think it can be improved.
+        while (quadStack.Count > 0) {
+            curQuad = quadStack.Pop();
+            
+            if ( (curQuad.x0 > searchX1) ||
+                 (curQuad.y0 > searchY1) ||
+                 (curQuad.x1 < searchX0) ||
+                 (curQuad.y1 < searchY0)
+                ) continue;
+
+            if ( curQuad.InclusivePoints.Length > 0) { //&& curQuad.isLeaf()?
+                //assume that the quad has at least one point
+                double dx, dy, distance; //memory vs readability!
+                foreach (Vector2 curPoint in curQuad.InclusivePoints) {
+                    dx = x - curPoint.X;
+                    dy = y - curPoint.Y;
+                    distance = dx * dx + dy * dy;
+                    if (distance < range*range) {
+                        range = Math.Sqrt(distance);
+                        searchX0 = x - range;
+                        searchY0 = y - range;
+                        searchX1 = x + range; 
+                        searchY1 = y + range;
+                        data = curPoint;
+                    }
+                }
+            } else {
+                int priorityQuad = DetermineQuad(targetPoint, curQuad.meanX(), curQuad.meanY());
+                if (curQuad.quadrants[priorityQuad] != null) quadStack.Push(curQuad.quadrants[priorityQuad]!);
+                for (int i = 0; i < curQuad.quadrants.Length; i++) {
+                    if (curQuad.quadrants[i] != null) {
+                        if (i != priorityQuad) {
+                            quadStack.Push(curQuad.quadrants[i]!);
+                        }
+                    }
+                }
+            }         
+                
+        }
+            
+        return data;
     }
     
-    void Y() {
-        
-    }
-    
-    void Copy() {
-        
-    }
-
-    void LeafCopy() {
-        
+    /// <summary>
+    ///  Performs a deep clone of the quadtree and returns it.
+    /// </summary>
+    /// <returns></returns>
+    public Quadtree Clone() {
+        Quadtree quadtreeCpy = (Quadtree) this.MemberwiseClone();
+        quadtreeCpy.root = this.root.Clone();
+        return quadtreeCpy;
     }
 
-    /*public Vector4 Bounds() {
+    /// <summary>
+    /// Returns a Vector4 representing the bounds of the quadtree.  
+    /// </summary>
+    /// <returns> float (minX, minY, maxX, maxY) </returns>
+    public Vector4 Bounds() {
         return new Vector4(
-             this.root.x0, 
-             this.root.y0, 
-            this.root.x1, 
-            this.root.y1);
-    }*/
-
-    /*
-     * Returns a list of all the points in the quadtree.
-     *  - This could be implemented using visit method and adding a callback that pushes the exclusive points to a list.
-     */
-    public Vector2[] Data() {
-        return this.root.InclusivePoints;
+            (float) this.root.x0, 
+            (float) this.root.y0, 
+            (float) this.root.x1, 
+            (float) this.root.y1
+        );
     }
+
+    /// <summary>
+    /// Returns a list of all points in the quadtree.
+    /// </summary>
+    /// <returns> Vector2[] points  </returns>
+    public Vector2[] GetPoints() {
+        return this.root.InclusivePoints;
+    }   
     
-    public int Size() {
-        int size = 0;
+    /// <summary>
+    /// Returns the number of quads in the quadtree.
+    /// </summary>
+    /// <returns> int count </returns>
+    public int QuadCount() {
+        int count = 0;
         this.Visit((Quad quad) => {
-            size++;
+            count++;
         });
-        return size;
+        return count;
+    }
+
+    /// <summary>
+    /// Returns the number of points in the quadtree.
+    /// </summary>
+    /// <returns> int count </returns>
+    public int Size() {
+        return this.root.InclusivePoints.Length;
+    }
+
+    //TODO: implement this after I integreate the node struct
+    public void Data() {
+        //this will loop over all the quads, access their nodes and get their data. Array of data for each node I guess ... 
+        this.Visit((Quad quad) => {
+            
+        });
     }
     
     

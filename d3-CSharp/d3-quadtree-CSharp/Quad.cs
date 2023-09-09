@@ -5,17 +5,15 @@ namespace d3_quadtree_CSharp;
 
 public class Quad
 {
-    //Maybe later this value can local for each quad and remove the internal method below.
+    //Maybe later this value can be local for each quad and remove the internal method below.
     private static int POINT_LIMIT = 1; 
     
-    //I could remove this, I think it serves no pupose
+    //TODO: should replace Vector2 I think with Node Struct ... 
     private List<Vector2> inclusivePoints = new List<Vector2>(); //points that reside in the quad or in the children quads.
-        
     private List<Vector2> exclusivePoints = new List<Vector2>(); //points that are in the quad but not in the children quads. Should never exceed the Point_Limit
-    
-    //use vector2 or a point struct for boundaries.
-        //public Vector2 min;
-        //public Vector2 max;
+    public Vector2[] InclusivePoints {
+        get { return inclusivePoints.ToArray(); }
+    }
     
     //boundaries of the quad (min and max x and y)
     public double x0;
@@ -23,26 +21,17 @@ public class Quad
     public double x1;
     public double y1;
     
-    //I could determine whether the quad is a leaf or not if the points count is equal to the limit_point or if the four children are null.
-    
-    //TODO: maybe make this an array of Quads? more efficent?
     //Top Right, Top Left, Bottom Left, Bottom Right
     public Quad?[] quadrants = new Quad?[4];
     
     //while convienient, the reference to the parent quad may not be necessary.
     public Quad? parent;
-    //maybe create functions that will create the above child quads so that it ensures that the boundaries are correct (each child is a quarter of the parent quad).
-
-    public Vector2[] InclusivePoints {
-        get { return inclusivePoints.ToArray(); }
-    }
-
-    
     
     public Quad(double x0 = 0, double y0 = 0, double x1 = 100, double y1 = 100) {
         if (!(x0<x1 && y0<y1)) {
             // throw new ArgumentException("Invalid values for boundaries, make sure that x0 < x1 & y0 < y1.");
             Console.WriteLine("Invalid values for boundaries, make sure that x0 < x1 & y0 < y1. For now default values will be used.");
+            x0 = 0; y0 = 0; x1 = 100; y1 = 100;
         }
         
         this.x0 = x0;
@@ -64,7 +53,7 @@ public class Quad
     }
 
     public bool isLeaf() {
-        //I can either check children or point count
+        //I can either check children or point count (inclusive > exclusive)
         for (int i=0; i<quadrants.Length; i++) {
             if (quadrants[i] != null) return false;
         }
@@ -174,6 +163,20 @@ public class Quad
                 i--;
             }
         }
+    }
+
+    /// <summary>
+    /// Creates a Deep Clone of the Quad, however the parent is not cloned because that will clone the entire tree.
+    /// </summary>
+    /// <returns></returns>
+    public Quad Clone() {
+        Quad quadCpy = (Quad) this.MemberwiseClone();
+        quadCpy.inclusivePoints = new List<Vector2>(this.inclusivePoints); //this works because Vector2 is a value type (struct) and not a reference type 
+        quadCpy.exclusivePoints = new List<Vector2>(this.exclusivePoints);
+        for (int i =0; i<4; i++) {
+            quadCpy.quadrants[i] = this.quadrants[i]?.Clone();
+        }
+        return quadCpy;
     }
     
     public void CopyInclusivePoints(Quad childQuad) {
